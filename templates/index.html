@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Chatbot</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .message-enter {
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.4), 0 0 30px rgba(167, 139, 250, 0.15);
+            border-color: rgba(167, 139, 250, 0.3);
+        }
+        
+        .send-button {
+            background: linear-gradient(135deg, #a78bfa 0%, #3b82f6 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .send-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #c4b5fd 0%, #60a5fa 100%);
+            transition: left 0.3s ease;
+        }
+        
+        .send-button:hover:not(:disabled)::before {
+            left: 0;
+        }
+        
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(167, 139, 250, 0.4), 0 0 40px rgba(59, 130, 246, 0.2);
+        }
+        
+        .send-button span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .send-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .premium-border {
+            border: 1px solid rgba(167, 139, 250, 0.15);
+        }
+        
+        .card-gradient {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+            backdrop-filter: blur(10px);
+        }
+        
+        .glass-effect {
+            background: rgba(20, 20, 30, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(167, 139, 250, 0.1);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #a78bfa 0%, #3b82f6 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .bot-avatar {
+            background: linear-gradient(135deg, #a78bfa 0%, #3b82f6 100%);
+        }
+        
+        .premium-glow {
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+        }
+        
+        .input-glow-effect {
+            box-shadow: 0 0 30px rgba(167, 139, 250, 0.2), 0 0 60px rgba(59, 130, 246, 0.1);
+        }
+        
+        .typing-indicator span {
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="w-full h-full flex flex-col overflow-auto"><!-- Premium Header -->
+   <header class="w-full px-8 py-6 premium-border border-b glass-effect">
+    <div class="max-w-4xl mx-auto">
+     <h1 id="chatTitle" class="text-3xl font-bold tracking-tight mb-1 gradient-text">AI Assistant</h1>
+     <p id="chatSubtitle" class="text-sm font-light tracking-wide opacity-60">Powered by advanced intelligence</p>
+    </div>
+   </header><!-- Chat Container -->
+   <main class="flex-1 w-full overflow-hidden flex flex-col">
+    <div id="chatContainer" class="chat-container flex-1 overflow-y-auto px-8 py-8">
+     <div class="max-w-4xl mx-auto space-y-6"><!-- Messages will be added here -->
+     </div>
+    </div><!-- Premium Input Area -->
+    <div class="w-full px-8 py-6 premium-border border-t glass-effect">
+     <div class="max-w-4xl mx-auto">
+      <form id="messageForm" class="flex gap-3 items-end">
+       <div class="flex-1"><textarea id="messageInput" rows="1" placeholder="Type your message..." class="input-field w-full px-5 py-4 rounded-2xl premium-border card-gradient resize-none focus:outline-none font-light"></textarea>
+       </div><button type="submit" id="sendButton" class="send-button px-8 py-4 rounded-2xl font-medium tracking-wide"> <span>Send</span> </button>
+      </form>
+     </div>
+    </div>
+   </main>
+  </div>
+  <script>
+        const defaultConfig = {
+            background_color: "#1a1a2e",
+            header_bg: "#1a1a2e",
+            text_primary: "#ffffff",
+            text_secondary: "#a0a0b0",
+            accent_color: "#a78bfa",
+            accent_text: "#ffffff",
+            font_family: "Inter",
+            font_size: 15,
+            chat_title: "AI Assistant",
+            chat_subtitle: "Powered by advanced intelligence",
+            placeholder_text: "Type your message...",
+            send_button_text: "Send"
+        };
+
+        const config = window.elementSdk?.config || { ...defaultConfig };
+
+        async function onConfigChange(config) {
+            const baseFont = config.font_family || defaultConfig.font_family;
+            const baseFontSize = config.font_size || defaultConfig.font_size;
+            const fontStack = `${baseFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+
+            // Apply background
+            document.getElementById('app').style.backgroundColor = config.background_color || defaultConfig.background_color;
+            
+            // Apply header styles
+            const header = document.querySelector('header');
+            header.style.backgroundColor = config.header_bg || defaultConfig.header_bg;
+            
+            // Apply title styles
+            const chatTitle = document.getElementById('chatTitle');
+            chatTitle.style.fontFamily = fontStack;
+            chatTitle.style.fontSize = `${baseFontSize * 2}px`;
+            chatTitle.textContent = config.chat_title || defaultConfig.chat_title;
+            
+            const chatSubtitle = document.getElementById('chatSubtitle');
+            chatSubtitle.style.fontFamily = fontStack;
+            chatSubtitle.style.fontSize = `${baseFontSize * 0.87}px`;
+            chatSubtitle.style.color = config.text_secondary || defaultConfig.text_secondary;
+            chatSubtitle.textContent = config.chat_subtitle || defaultConfig.chat_subtitle;
+            
+            // Apply input styles
+            const messageInput = document.getElementById('messageInput');
+            messageInput.style.fontFamily = fontStack;
+            messageInput.style.fontSize = `${baseFontSize}px`;
+            messageInput.style.color = config.text_primary || defaultConfig.text_primary;
+            messageInput.placeholder = config.placeholder_text || defaultConfig.placeholder_text;
+            
+            // Apply button styles
+            const sendButton = document.getElementById('sendButton');
+            sendButton.style.fontFamily = fontStack;
+            sendButton.style.fontSize = `${baseFontSize}px`;
+            sendButton.querySelector('span').textContent = config.send_button_text || defaultConfig.send_button_text;
+
+            // Update existing messages
+            updateMessageStyles(config, fontStack, baseFontSize);
+        }
+
+        function updateMessageStyles(config, fontStack, baseFontSize) {
+            const userMessages = document.querySelectorAll('.user-message');
+            const botMessages = document.querySelectorAll('.bot-message');
+            
+            userMessages.forEach(msg => {
+                msg.style.background = 'linear-gradient(135deg, #a78bfa 0%, #3b82f6 100%)';
+                msg.style.color = config.accent_text || defaultConfig.accent_text;
+                msg.style.fontFamily = fontStack;
+                msg.style.fontSize = `${baseFontSize}px`;
+            });
+            
+            botMessages.forEach(msg => {
+                msg.style.color = config.text_primary || defaultConfig.text_primary;
+                msg.style.fontFamily = fontStack;
+                msg.style.fontSize = `${baseFontSize}px`;
+            });
+        }
+
+        function mapToCapabilities(config) {
+            return {
+                recolorables: [
+                    {
+                        get: () => config.background_color || defaultConfig.background_color,
+                        set: (value) => {
+                            config.background_color = value;
+                            if (window.elementSdk) window.elementSdk.setConfig({ background_color: value });
+                        }
+                    },
+                    {
+                        get: () => config.header_bg || defaultConfig.header_bg,
+                        set: (value) => {
+                            config.header_bg = value;
+                            if (window.elementSdk) window.elementSdk.setConfig({ header_bg: value });
+                        }
+                    },
+                    {
+                        get: () => config.text_primary || defaultConfig.text_primary,
+                        set: (value) => {
+                            config.text_primary = value;
+                            if (window.elementSdk) window.elementSdk.setConfig({ text_primary: value });
+                        }
+                    },
+                    {
+                        get: () => config.accent_color || defaultConfig.accent_color,
+                        set: (value) => {
+                            config.accent_color = value;
+                            if (window.elementSdk) window.elementSdk.setConfig({ accent_color: value });
+                        }
+                    },
+                    {
+                        get: () => config.accent_text || defaultConfig.accent_text,
+                        set: (value) => {
+                            config.accent_text = value;
+                            if (window.elementSdk) window.elementSdk.setConfig({ accent_text: value });
+                        }
+                    }
+                ],
+                borderables: [],
+                fontEditable: {
+                    get: () => config.font_family || defaultConfig.font_family,
+                    set: (value) => {
+                        config.font_family = value;
+                        if (window.elementSdk) window.elementSdk.setConfig({ font_family: value });
+                    }
+                },
+                fontSizeable: {
+                    get: () => config.font_size || defaultConfig.font_size,
+                    set: (value) => {
+                        config.font_size = value;
+                        if (window.elementSdk) window.elementSdk.setConfig({ font_size: value });
+                    }
+                }
+            };
+        }
+
+        function mapToEditPanelValues(config) {
+            return new Map([
+                ["chat_title", config.chat_title || defaultConfig.chat_title],
+                ["chat_subtitle", config.chat_subtitle || defaultConfig.chat_subtitle],
+                ["placeholder_text", config.placeholder_text || defaultConfig.placeholder_text],
+                ["send_button_text", config.send_button_text || defaultConfig.send_button_text]
+            ]);
+        }
+
+        if (window.elementSdk) {
+            window.elementSdk.init({
+                defaultConfig,
+                onConfigChange,
+                mapToCapabilities,
+                mapToEditPanelValues
+            });
+        }
+
+        onConfigChange(config);
+
+        // Chat functionality
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const chatContainer = document.getElementById('chatContainer').querySelector('.space-y-6');
+        const sendButton = document.getElementById('sendButton');
+
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-enter flex ${isUser ? 'justify-end' : 'justify-start'} gap-3`;
+            
+            if (!isUser) {
+                const avatar = document.createElement('div');
+                avatar.className = 'bot-avatar w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-1';
+                avatar.style.color = config.accent_text || defaultConfig.accent_text;
+                avatar.textContent = 'AI';
+                messageDiv.appendChild(avatar);
+            }
+            
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-[70%] px-6 py-4 rounded-2xl ${isUser ? 'user-message' : 'bot-message'}`;
+            bubble.style.wordBreak = 'break-word';
+            
+            const baseFont = config.font_family || defaultConfig.font_family;
+            const baseFontSize = config.font_size || defaultConfig.font_size;
+            const fontStack = `${baseFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+            
+            if (isUser) {
+                bubble.style.background = 'linear-gradient(135deg, #a78bfa 0%, #3b82f6 100%)';
+                bubble.style.color = config.accent_text || defaultConfig.accent_text;
+            } else {
+                bubble.style.border = '1px solid rgba(167, 139, 250, 0.2)';
+                bubble.style.background = 'linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)';
+                bubble.style.color = config.text_primary || defaultConfig.text_primary;
+            }
+            
+            bubble.style.fontFamily = fontStack;
+            bubble.style.fontSize = `${baseFontSize}px`;
+            bubble.style.fontWeight = '300';
+            bubble.style.lineHeight = '1.6';
+            bubble.textContent = text;
+            
+            messageDiv.appendChild(bubble);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.parentElement.scrollTop = chatContainer.parentElement.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.id = 'typingIndicator';
+            indicator.className = 'message-enter flex justify-start gap-3';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'bot-avatar w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-1';
+            avatar.style.color = config.accent_text || defaultConfig.accent_text;
+            avatar.textContent = 'AI';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'px-6 py-4 rounded-2xl premium-border card-gradient';
+            
+            const dots = document.createElement('div');
+            dots.className = 'typing-indicator flex gap-1';
+            dots.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg, #a78bfa, #3b82f6);display:inline-block"></span><span style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg, #a78bfa, #3b82f6);display:inline-block"></span><span style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg, #a78bfa, #3b82f6);display:inline-block"></span>';
+            
+            bubble.appendChild(dots);
+            indicator.appendChild(avatar);
+            indicator.appendChild(bubble);
+            chatContainer.appendChild(indicator);
+            chatContainer.parentElement.scrollTop = chatContainer.parentElement.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            addMessage(message, true);
+            messageInput.value = '';
+            
+            sendButton.disabled = true;
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: message })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const data = await response.json();
+                removeTypingIndicator();
+                addMessage(data.answer || 'No response received.', false);
+                sendButton.disabled = false;
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator();
+                addMessage('An error occurred. Please check your connection and try again.', false);
+                sendButton.disabled = false;
+            }
+        });
+
+        // Add welcome message
+        setTimeout(() => {
+            addMessage('Hello! I\'m your AI assistant. How can I help you today?', false);
+        }, 500);
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b932aaab605a080',t:'MTc2NzYxODExMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
